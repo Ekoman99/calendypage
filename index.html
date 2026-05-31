@@ -307,6 +307,51 @@
   .topbar-user { font-size: 12px; opacity: 0.85; }
   #logoutBtn { background: rgba(255,255,255,0.2); border: none; color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
   #logoutBtn:hover { background: rgba(255,255,255,0.32); }
+  /* Notes tab */
+  .notes-area { flex: 1; overflow: auto; padding: 16px; }
+  .notes-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 860px) { .notes-cols { grid-template-columns: 1fr; } }
+  .notes-col-head { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+  .notes-col-count { font-size: 11px; font-weight: 600; color: #fff; border-radius: 10px; padding: 0 7px; min-width: 18px; text-align: center; }
+  .ncard {
+    background: var(--bg-primary); border: 0.5px solid var(--border); border-left: 3px solid;
+    border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .ncard:hover { border-color: var(--mag); }
+  .ncard-layer { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .ncard-node { font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 3px 0 4px; }
+  .ncard-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ncard-meta { font-size: 10px; color: var(--text-secondary); margin-top: 6px; display: flex; justify-content: space-between; gap: 8px; }
+  .ncard-meta .age { font-weight: 600; }
+  .notes-empty { font-size: 11px; color: var(--text-secondary); opacity: 0.55; padding: 6px 2px; }
+  /* Mini-calendar inside detail modal */
+  .mini-wrap { display: flex; gap: 12px; flex-wrap: wrap; margin: 6px 0 4px; }
+  .mini-cal { background: var(--bg-secondary); border-radius: 8px; padding: 8px; }
+  .mini-cal-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); text-align: center; margin-bottom: 5px; }
+  .mini-grid { display: grid; grid-template-columns: repeat(7, 18px); gap: 2px; }
+  .mini-dow { font-size: 8px; color: var(--text-secondary); text-align: center; }
+  .mini-day { width: 18px; height: 18px; border-radius: 4px; font-size: 9px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+  .mini-day.out { opacity: 0.25; }
+  .mini-day.active { color: #fff; }
+  .mini-day.start { box-shadow: inset 0 0 0 1.5px var(--text-primary); font-weight: 700; }
+  .mini-day.endcap { box-shadow: inset 0 0 0 1.5px var(--ok); font-weight: 700; }
+  .mini-day.upd { outline: 1.5px dashed var(--warn); outline-offset: -2px; }
+  .mini-legend { font-size: 9px; color: var(--text-secondary); display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  /* History timeline */
+  .hist-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin: 16px 0 8px; }
+  .hist { border-left: 1.5px solid var(--border-med); margin-left: 5px; padding-left: 14px; }
+  .hist-item { position: relative; padding-bottom: 12px; }
+  .hist-item:last-child { padding-bottom: 0; }
+  .hist-item::before {
+    content: ''; position: absolute; left: -20px; top: 2px; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--bg-primary); border: 2px solid var(--text-secondary);
+  }
+  .hist-item.closing::before { border-color: var(--ok); background: var(--ok); }
+  .hist-item.opening::before { border-color: var(--mag); background: var(--mag); }
+  .hist-date { font-size: 10px; color: var(--text-secondary); }
+  .hist-body { font-size: 12px; color: var(--text-primary); margin: 2px 0; line-height: 1.4; }
+  .hist-who { font-size: 10px; color: var(--text-secondary); }
+  .hist-empty { font-size: 11px; color: var(--text-secondary); opacity: 0.6; }
   /* Detail modal */
   .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
   .detail-layerline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -369,6 +414,9 @@
     <button class="tab-btn" onclick="switchView('timeline',this)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h13M3 12h18M3 18h9"/></svg>Timeline
     </button>
+    <button class="tab-btn" onclick="switchView('notes',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/></svg>Notes
+    </button>
   </div>
 
   <div class="filters" id="filterBar"></div>
@@ -384,6 +432,8 @@
     </div>
 
     <div id="tlView" class="timeline-area" style="display:none"></div>
+
+    <div id="notesView" class="notes-area" style="display:none"></div>
 
     <div class="detail-panel closed" id="detailPanel">
       <div class="panel-header">
@@ -444,6 +494,20 @@
   <!-- Detail modal -->
   <div id="detailBg" class="modal-bg" style="display:none" onclick="if(event.target===this)closeDetail()">
     <div class="modal" id="detailModal"></div>
+  </div>
+
+  <!-- Update / close modal -->
+  <div id="updateBg" class="modal-bg" style="display:none" onclick="if(event.target===this)closeUpdate()">
+    <div class="modal">
+      <div class="modal-title" id="updTitle">Add update</div>
+      <div class="form-row"><label class="form-label" id="updDateLbl">Date</label><input class="form-input" type="date" id="updDate"></div>
+      <div class="form-row"><label class="form-label">Note</label><textarea class="form-input" id="updBody" rows="3" placeholder="What changed / what was found"></textarea></div>
+      <div class="form-row"><label class="form-label">Engineer</label><input class="form-input" type="text" id="updUser" placeholder="Your name"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeUpdate()">Cancel</button>
+        <button class="btn-save" id="updSave" onclick="saveUpdate()">Save</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -521,7 +585,9 @@ function switchView(view, btn) {
   btn.classList.add('active');
   document.getElementById('calView').style.display = view === 'calendar' ? 'flex' : 'none';
   document.getElementById('tlView').style.display = view === 'timeline' ? 'block' : 'none';
+  document.getElementById('notesView').style.display = view === 'notes' ? 'block' : 'none';
   if (view === 'timeline') renderTimeline();
+  if (view === 'notes') renderNotes();
   closePanel();
 }
 
@@ -569,6 +635,7 @@ function refreshAll() {
   buildFilterBar();
   renderCalendar();
   if (currentView === 'timeline') renderTimeline();
+  if (currentView === 'notes') renderNotes();
   if (selectedDate) openPanel(selectedDate);
 }
 
@@ -726,19 +793,66 @@ function openDetail(id) {
          + (st === 'open' ? '<span class="event-tag tag-open">Open</span>'
             : st === 'resolved' ? '<span class="event-tag tag-resolved">Resolved</span>' : '');
     const statusLabel = st === 'open' ? 'Open problem' : st === 'resolved' ? 'Resolved' : 'Observation';
+    accent = st === 'open' ? 'var(--warn)' : st === 'resolved' ? 'var(--ok)' : l.color;
+
+    const ups = (e.updates || []).slice().sort((a,b)=> a.update_date.localeCompare(b.update_date));
+    const lastUpd = ups.length ? ups[ups.length-1].update_date : e.date;
+    const ongoing = st !== 'resolved' && st !== 'observation';
+    const rangeEnd = st === 'resolved' ? (e.resolvedOn || lastUpd) : (st === 'open' ? lastUpd : e.date);
+
+    // grid rows differ a little by status
+    let rangeRow;
+    if (st === 'resolved') {
+      const dur = dayDiff(e.date, e.resolvedOn || rangeEnd) + 1;
+      rangeRow = `<div class="detail-k">Active</div><div class="detail-v">${prettyDay(e.date)} → ${prettyDay(e.resolvedOn||rangeEnd)} · ${dur} day${dur>1?'s':''}</div>`;
+    } else if (st === 'open') {
+      const age = dayDiff(e.date, ymd(new Date()));
+      rangeRow = `<div class="detail-k">Open since</div><div class="detail-v">${prettyDay(e.date)} · ${age} day${age!==1?'s':''} open</div>`;
+    } else {
+      rangeRow = `<div class="detail-k">Date</div><div class="detail-v">${prettyDay(e.date)}, ${new Date(e.date+'T12:00:00').getFullYear()}</div>`;
+    }
     gridRows = `
-      <div class="detail-k">Kind</div><div class="detail-v">Observation / note</div>
-      <div class="detail-k">Status</div><div class="detail-v">${statusLabel}</div>
-      <div class="detail-k">Date</div><div class="detail-v">${prettyDay(e.date)}, ${new Date(e.date+'T12:00:00').getFullYear()}</div>
+      <div class="detail-k">Kind</div><div class="detail-v">${statusLabel}</div>
+      ${rangeRow}
       <div class="detail-k">Elements</div><div class="detail-v">${e.node}</div>
       <div class="detail-k">Logged by</div><div class="detail-v">${e.user}</div>`;
-    accent = st === 'open' ? 'var(--warn)' : st === 'resolved' ? 'var(--ok)' : l.color;
-    // amend controls
+
+    // mini-calendar + history + action buttons all packed into amendHtml (rendered after the description)
+    const miniHtml = (st === 'observation')
+      ? miniCalHTML(e.date, e.date, ups, accent, false)
+      : miniCalHTML(e.date, rangeEnd, ups, accent, ongoing);
+
+    let histRows = '';
+    // first the original logging as the opening point
+    histRows += `<div class="hist-item opening">
+      <div class="hist-date">${prettyDay(e.date)} · logged</div>
+      <div class="hist-body">${e.desc}</div>
+      <div class="hist-who">${e.user}</div></div>`;
+    ups.forEach(u => {
+      histRows += `<div class="hist-item ${u.is_closing?'closing':''}">
+        <div class="hist-date">${prettyDay(u.update_date)}${u.is_closing?' · closed':''}</div>
+        <div class="hist-body">${u.body || '—'}</div>
+        <div class="hist-who">${u.engineer || ''}</div></div>`;
+    });
+
     let btns = '';
-    if (st !== 'open') btns += `<button class="amend-btn solid-warn" onclick="setNoteStatus(${e.id},'open')">Flag as open problem</button>`;
-    if (st !== 'resolved') btns += `<button class="amend-btn solid-ok" onclick="setNoteStatus(${e.id},'resolved')">Mark resolved</button>`;
-    if (st !== 'observation') btns += `<button class="amend-btn" onclick="setNoteStatus(${e.id},'observation')">Plain note</button>`;
-    amendHtml = `<div class="amend-row">${btns}</div>`;
+    if (st === 'observation') {
+      btns += `<button class="amend-btn solid-warn" onclick="setNoteStatus(${e.id},'open')">Flag as open problem</button>`;
+      btns += `<button class="amend-btn solid-ok" onclick="openUpdateModal(${e.id},'close')">Mark resolved…</button>`;
+    } else if (st === 'open') {
+      btns += `<button class="amend-btn" onclick="openUpdateModal(${e.id},'update')">Add update</button>`;
+      btns += `<button class="amend-btn solid-ok" onclick="openUpdateModal(${e.id},'close')">Close problem…</button>`;
+      btns += `<button class="amend-btn" onclick="setNoteStatus(${e.id},'observation')">Back to plain note</button>`;
+    } else { // resolved
+      btns += `<button class="amend-btn solid-warn" onclick="setNoteStatus(${e.id},'open')">Reopen</button>`;
+      btns += `<button class="amend-btn" onclick="openUpdateModal(${e.id},'update')">Add update</button>`;
+    }
+
+    amendHtml = `
+      <div class="mini-wrap">${miniHtml}</div>
+      <div class="hist-title">History &amp; updates</div>
+      <div class="hist">${histRows || '<div class="hist-empty">No updates yet.</div>'}</div>
+      <div class="amend-row">${btns}</div>`;
   } else {
     tags = (e.incident ? '<span class="event-tag tag-inc">Incident</span>' : '')
          + (e.overnight ? '<span class="event-tag tag-night">Night work</span>' : '');
@@ -776,14 +890,145 @@ function closeDetail() { document.getElementById('detailBg').style.display = 'no
 async function setNoteStatus(id, status) {
   const e = events.find(x => x.id === id);
   if (!e || e.kind !== 'note') return;
-  const prev = e.status;
-  e.status = status;                       // optimistic local update
+  const prev = { status: e.status, resolvedOn: e.resolvedOn };
+  e.status = status;
+  const patch = { status };
+  if (status !== 'resolved') { e.resolvedOn = null; patch.resolved_on = null; }   // leaving resolved clears the close date
   renderCalendar();
   if (currentView === 'timeline') renderTimeline();
+  if (currentView === 'notes') renderNotes();
   if (selectedDate) openPanel(selectedDate);
   openDetail(id);                          // refresh the open modal
-  const { error } = await sb.from('events').update({ status }).eq('id', id);
-  if (error) { alert('Could not save status change: ' + error.message); e.status = prev; refreshAll(); openDetail(id); }
+  const { error } = await sb.from('events').update(patch).eq('id', id);
+  if (error) { alert('Could not save status change: ' + error.message); e.status = prev.status; e.resolvedOn = prev.resolvedOn; refreshAll(); openDetail(id); }
+}
+
+// whole-day difference between two "YYYY-MM-DD" strings (b - a)
+function dayDiff(a, b) {
+  return Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00')) / 86400000);
+}
+
+// ---------- Notes tab ----------
+function renderNotes() {
+  const cont = document.getElementById('notesView');
+  const notes = events.filter(e => e.kind === 'note' && activeFilters.has(e.layer));
+  const open = notes.filter(n => n.status === 'open')
+                    .sort((a,b)=> a.date.localeCompare(b.date));              // oldest open first
+  const obs  = notes.filter(n => (n.status || 'observation') === 'observation')
+                    .sort((a,b)=> b.date.localeCompare(a.date));
+  const res  = notes.filter(n => n.status === 'resolved')
+                    .sort((a,b)=> (b.resolvedOn||b.date).localeCompare(a.resolvedOn||a.date));
+
+  const card = (n) => {
+    const l = lmap[n.layer];
+    let meta;
+    if (n.status === 'open') {
+      const age = dayDiff(n.date, ymd(new Date()));
+      meta = `<span>${prettyDay(n.date)}</span><span class="age" style="color:var(--warn)">${age} day${age!==1?'s':''} open</span>`;
+    } else if (n.status === 'resolved') {
+      const end = n.resolvedOn || n.date;
+      const dur = dayDiff(n.date, end) + 1;
+      meta = `<span>${prettyDay(n.date)} → ${prettyDay(end)}</span><span class="age" style="color:var(--ok)">${dur} day${dur>1?'s':''}</span>`;
+    } else {
+      meta = `<span>${prettyDay(n.date)}</span><span>${n.user}</span>`;
+    }
+    const upcount = (n.updates||[]).length;
+    return `<div class="ncard" style="border-left-color:${l.color}" onclick="openDetail(${n.id})">
+      <div class="ncard-layer" style="color:${getLyr(n.layer).text}">${l.label}</div>
+      <div class="ncard-node">${n.node}</div>
+      <div class="ncard-desc">${n.desc}</div>
+      <div class="ncard-meta">${meta}</div>
+      ${upcount ? `<div class="ncard-meta"><span>${upcount} update${upcount>1?'s':''}</span></div>` : ''}
+    </div>`;
+  };
+
+  const col = (title, color, list) => `
+    <div>
+      <div class="notes-col-head"><span style="color:${color}">${title}</span>
+        <span class="notes-col-count" style="background:${color}">${list.length}</span></div>
+      ${list.length ? list.map(card).join('') : '<div class="notes-empty">Nothing here.</div>'}
+    </div>`;
+
+  cont.innerHTML = `<div class="notes-cols">
+    ${col('Open problems', 'var(--warn)', open)}
+    ${col('Observations', 'var(--text-secondary)', obs)}
+    ${col('Resolved', 'var(--ok)', res)}
+  </div>`;
+}
+
+// ---------- mini-calendar for a note's active period ----------
+function miniCalHTML(startDS, endDS, updates, accent, ongoing) {
+  const upDates = new Set((updates||[]).map(u => u.update_date));
+  const s = new Date(startDS+'T12:00:00'), e = new Date(endDS+'T12:00:00');
+  let cur = new Date(s.getFullYear(), s.getMonth(), 1);
+  const lastFirst = new Date(e.getFullYear(), e.getMonth(), 1);
+  let html = '', months = 0;
+  while (cur <= lastFirst && months < 4) {
+    const y = cur.getFullYear(), m = cur.getMonth();
+    const monthName = cur.toLocaleDateString('en-GB', { month:'short', year:'numeric' });
+    let startDow = new Date(y, m, 1).getDay(); startDow = startDow === 0 ? 6 : startDow - 1;
+    const dim = new Date(y, m+1, 0).getDate();
+    let cells = '';
+    ['M','T','W','T','F','S','S'].forEach(d => cells += `<div class="mini-dow">${d}</div>`);
+    for (let i = 0; i < startDow; i++) cells += `<div class="mini-day out"></div>`;
+    for (let d = 1; d <= dim; d++) {
+      const ds = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const active = ds >= startDS && ds <= endDS;
+      let cls = 'mini-day', style = '';
+      if (active) { cls += ' active'; style = `background:${accent}`; }
+      if (ds === startDS) cls += ' start';
+      if (!ongoing && ds === endDS && endDS !== startDS) cls += ' endcap';
+      if (upDates.has(ds)) cls += ' upd';
+      cells += `<div class="${cls}" style="${style}">${d}</div>`;
+    }
+    html += `<div class="mini-cal"><div class="mini-cal-title">${monthName}</div><div class="mini-grid">${cells}</div></div>`;
+    cur = new Date(y, m+1, 1); months++;
+  }
+  const legend = `<div class="mini-legend">
+    <span>▦ active period</span>
+    <span>□ start</span>
+    ${ongoing ? '<span style="color:var(--warn)">ongoing</span>' : '<span style="color:var(--ok)">✓ closed</span>'}
+    ${(updates&&updates.length)?'<span style="color:var(--warn)">⌑ update</span>':''}
+  </div>`;
+  return html + legend;
+}
+
+// ---------- update / close modal ----------
+let updNoteId = null, updMode = 'update';
+function openUpdateModal(id, mode) {
+  updNoteId = id; updMode = mode;
+  const isClose = mode === 'close';
+  document.getElementById('updTitle').textContent = isClose ? 'Close problem' : 'Add update';
+  document.getElementById('updDateLbl').textContent = isClose ? 'Close date' : 'Date';
+  document.getElementById('updSave').textContent = isClose ? 'Close problem' : 'Save update';
+  document.getElementById('updDate').value = ymd(new Date());
+  document.getElementById('updBody').value = '';
+  document.getElementById('updUser').value = '';
+  document.getElementById('updBody').placeholder = isClose ? 'How it was resolved' : 'What changed / what was found';
+  document.getElementById('updateBg').style.display = 'flex';
+}
+function closeUpdate() { document.getElementById('updateBg').style.display = 'none'; }
+
+async function saveUpdate() {
+  const e = events.find(x => x.id === updNoteId);
+  if (!e) return;
+  const date = document.getElementById('updDate').value || ymd(new Date());
+  const body = document.getElementById('updBody').value || '—';
+  const eng  = document.getElementById('updUser').value || 'Unknown';
+  const isClose = updMode === 'close';
+  const { data, error } = await sb.from('note_updates')
+    .insert({ note_id: updNoteId, update_date: date, body, engineer: eng, is_closing: isClose })
+    .select().single();
+  if (error) { alert('Could not save update: ' + error.message); return; }
+  e.updates = e.updates || []; e.updates.push(data);
+  if (isClose) {
+    e.status = 'resolved'; e.resolvedOn = date;
+    const { error: e2 } = await sb.from('events').update({ status: 'resolved', resolved_on: date }).eq('id', updNoteId);
+    if (e2) { alert('Saved the note but could not set resolved status: ' + e2.message); }
+  }
+  closeUpdate();
+  refreshAll();
+  openDetail(updNoteId);
 }
 
 function setAddKind(k){
@@ -922,8 +1167,8 @@ function renderTimeline() {
 //  >>> EDIT THESE TWO LINES with the values from your project <<<
 //  Supabase dashboard → Project Settings → API
 // ============================================================
-const SUPABASE_URL  = 'https://odecimhbblkezfxyjkyb.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZWNpbWhiYmxrZXpmeHlqa3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDY4MTMsImV4cCI6MjA5NTgyMjgxM30.vGRnFV3YiWXBc13K6ClxvGqmzuBeASXvyibLOViW7I4';
+const SUPABASE_URL  = 'https://YOUR-PROJECT-ref.supabase.co';
+const SUPABASE_ANON = 'YOUR-PUBLIC-ANON-KEY';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -940,6 +1185,8 @@ function fromRow(r) {
     end: r.end_at,
     status: r.status,
     date: r.event_date,
+    resolvedOn: r.resolved_on,
+    updates: [],
     desc: r.description,
     user: r.engineer,
   };
@@ -949,6 +1196,16 @@ async function loadEvents() {
   const { data, error } = await sb.from('events').select('*');
   if (error) { alert('Could not load events: ' + error.message); events = []; return; }
   events = data.map(r => deriveEvent(fromRow(r)));
+  await loadNoteUpdates();
+}
+
+// Load all note updates and attach them to their parent notes.
+async function loadNoteUpdates() {
+  const { data, error } = await sb.from('note_updates').select('*').order('update_date', { ascending: true });
+  if (error) { console.warn('Could not load note updates:', error.message); return; }
+  const byNote = {};
+  data.forEach(u => { (byNote[u.note_id] = byNote[u.note_id] || []).push(u); });
+  events.forEach(e => { if (e.kind === 'note') e.updates = byNote[e.id] || []; });
 }
 
 // ---- auth gate ----
