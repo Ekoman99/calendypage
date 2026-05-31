@@ -1,0 +1,996 @@
+<style>
+  :root {
+    --mag: #E4007C;
+    --mag-mid: #c0006a;
+    --inc: #D40000;
+    --warn: #B26A00;
+    --ok: #0F8A4C;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #efefef;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --border: rgba(0,0,0,0.12);
+    --border-med: rgba(0,0,0,0.2);
+  }
+  [data-theme="dark"] {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2a2a2a;
+    --bg-tertiary: #141414;
+    --text-primary: #f0f0f0;
+    --text-secondary: #999999;
+    --border: rgba(255,255,255,0.1);
+    --border-med: rgba(255,255,255,0.18);
+    --inc: #ff4d4d;
+    --warn: #e0a44d;
+    --ok: #4dc486;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #app {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-tertiary);
+    min-height: 600px;
+    color: var(--text-primary);
+  }
+  .topbar {
+    background: var(--mag);
+    color: white;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-title { font-size: 15px; font-weight: 500; }
+  .topbar svg { display: block; }
+  .theme-toggle {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,0.32); }
+  .view-tabs {
+    display: flex;
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 16px;
+    gap: 4px;
+  }
+  .tab-btn {
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -0.5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab-btn.active { color: var(--mag); border-bottom-color: var(--mag); font-weight: 500; }
+  .tab-btn:hover:not(.active) { color: var(--text-primary); }
+  .filters {
+    background: var(--bg-primary);
+    border-bottom: 0.5px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .filter-div { width: 1px; height: 18px; background: var(--border-med); margin: 0 4px; }
+  .kind-seg { display: inline-flex; border: 0.5px solid var(--border-med); border-radius: 7px; overflow: hidden; }
+  .kind-seg button {
+    padding: 3px 13px; font-size: 12px; border: none; cursor: pointer;
+    background: var(--bg-primary); color: var(--text-secondary);
+    border-right: 0.5px solid var(--border-med);
+  }
+  .kind-seg button:last-child { border-right: none; }
+  .kind-seg button.active { background: var(--mag); color: #fff; }
+  .filter-btn {
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 0.5px solid;
+    font-size: 12px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    color: var(--text-secondary);
+    display: inline-flex; align-items: center;
+  }
+  .filter-btn.off { opacity: 0.3; }
+  .main { display: flex; height: calc(100vh - 130px); min-height: 520px; }
+  .calendar-area { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; }
+  .detail-panel {
+    width: 300px;
+    background: var(--bg-primary);
+    border-left: 0.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.2s;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .detail-panel.closed { width: 0; border: none; }
+  .panel-header {
+    padding: 12px 14px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-primary);
+  }
+  .panel-date { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .panel-close { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 20px; line-height:1; }
+  .panel-body { flex: 1; overflow-y: auto; padding: 10px 14px; background: var(--bg-primary); }
+  .panel-footer { padding: 10px 14px; border-top: 0.5px solid var(--border); background: var(--bg-primary); }
+  .add-btn {
+    width: 100%;
+    padding: 7px;
+    background: var(--mag);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .add-btn:hover { background: var(--mag-mid); }
+  .cal-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+    flex: 0 0 auto;
+  }
+  .cal-nav-title { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+  .cal-nav-btn {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-med);
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+  .cal-nav-btn:hover { background: var(--bg-secondary); }
+  .cal-grid {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: 18px repeat(6, minmax(104px, 1fr));
+    gap: 4px;
+    min-height: 620px;
+  }
+  .cal-dow { text-align: center; font-size: 11px; color: var(--text-secondary); padding: 2px 0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cal-cell {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 7px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+  .cal-cell:hover { border-color: var(--mag); }
+  .cal-cell.selected { border-color: var(--mag); border-width: 1.5px; }
+  .cal-cell.other-month { opacity: 0.3; }
+  .day-num { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
+  .cal-cell.today .day-num { color: var(--mag); font-weight: 600; }
+  .dot-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .dot { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; }
+  .note-mark {
+    width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 700; line-height: 1;
+  }
+  .note-mark.resolved { opacity: 0.5; }
+  .note-mark.observation { opacity: 0.9; }
+  .inc-mark {
+    width: 20px; height: 20px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 700; line-height: 1;
+    border: 2px solid var(--inc); flex-shrink: 0;
+  }
+  .event-count { font-size: 10px; color: var(--text-secondary); margin-top: 3px; }
+  /* Night-work box spanning two days (hugs the boundary, doesn't run full center-to-center) */
+  .night-box {
+    position: absolute;
+    left: 75%;
+    width: calc(50% + 4px);
+    height: 20px;
+    border-radius: 5px;
+    display: flex; align-items: center; gap: 5px;
+    padding: 0 8px;
+    font-size: 11px; color: #fff; font-weight: 500;
+    white-space: nowrap; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    z-index: 3;
+    cursor: pointer;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.10) 0 6px, transparent 6px 12px);
+  }
+  .night-box .moon { flex-shrink: 0; }
+  .night-box .nb-label { overflow: hidden; text-overflow: ellipsis; }
+  .night-box.incident { border: 1.5px solid var(--inc); }
+  .night-more {
+    position: absolute; left: 75%; width: calc(50% + 4px); height: 20px;
+    border-radius: 5px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; color: var(--text-secondary);
+    background: var(--bg-secondary); border: 0.5px dashed var(--border-med);
+    z-index: 3; cursor: pointer;
+  }
+  .layer-group-title {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text-secondary); margin: 12px 0 5px;
+  }
+  .layer-group-title:first-child { margin-top: 0; }
+  .event-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 3px solid;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .event-item.is-note { border-left-style: dashed; }
+  .event-badge { font-size: 10px; padding: 1px 7px; border-radius: 10px; font-weight: 500; }
+  .note-badge { background: var(--bg-secondary); border: 0.5px solid var(--border-med); color: var(--text-secondary); }
+  .event-tag {
+    font-size: 9px; padding: 1px 6px; border-radius: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; margin-left: 4px;
+  }
+  .tag-inc { background: var(--inc); color: #fff; }
+  .tag-open { background: var(--warn); color: #fff; }
+  .tag-resolved { background: var(--ok); color: #fff; }
+  .tag-night { background: rgba(0,0,0,0.06); color: var(--text-secondary); border: 0.5px solid var(--border-med); }
+  [data-theme="dark"] .tag-night { background: rgba(255,255,255,0.08); }
+  .event-node { font-size: 12px; font-weight: 500; color: var(--text-primary); margin: 5px 0 2px; }
+  .event-time { font-size: 10px; color: var(--text-secondary); margin: 2px 0; }
+  .event-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+  .event-user { font-size: 10px; color: var(--text-secondary); margin-top: 4px; }
+  .empty-panel { text-align: center; color: var(--text-secondary); font-size: 13px; padding: 30px 10px; }
+  .timeline-area { flex: 1; overflow: auto; padding: 12px; }
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .modal {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 20px;
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    border: 0.5px solid var(--border-med);
+  }
+  .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 14px; color: var(--text-primary); }
+  .form-row { margin-bottom: 10px; }
+  .form-row-split { display: flex; gap: 10px; }
+  .form-row-split > div { flex: 1; }
+  .form-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block; }
+  .form-input {
+    width: 100%; padding: 7px 10px;
+    border: 0.5px solid var(--border-med);
+    border-radius: 6px; font-size: 13px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+  .form-input:focus { outline: none; border-color: var(--mag); }
+  .form-check { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-primary); cursor: pointer; }
+  .form-check input { width: 15px; height: 15px; accent-color: var(--mag); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+  .btn-cancel { padding: 7px 14px; border: 0.5px solid var(--border-med); border-radius: 6px; background: none; cursor: pointer; font-size: 13px; color: var(--text-secondary); }
+  .btn-save { padding: 7px 14px; background: var(--mag); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  /* Login gate */
+  #loginGate {
+    position: fixed; inset: 0; z-index: 500;
+    background: var(--bg-tertiary);
+    display: flex; align-items: center; justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .login-card {
+    background: var(--bg-primary); border: 0.5px solid var(--border-med);
+    border-radius: 12px; padding: 26px 24px; width: 320px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  }
+  .login-brand { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; }
+  .login-brand-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .login-msg { font-size: 12px; min-height: 16px; margin-top: 4px; color: var(--inc); }
+  .login-btn {
+    width: 100%; padding: 9px; margin-top: 6px; background: var(--mag); color: #fff;
+    border: none; border-radius: 6px; font-size: 14px; cursor: pointer;
+  }
+  .login-btn:hover { background: var(--mag-mid); }
+  .login-btn:disabled { opacity: 0.6; cursor: default; }
+  .topbar-user { font-size: 12px; opacity: 0.85; }
+  #logoutBtn { background: rgba(255,255,255,0.2); border: none; color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+  #logoutBtn:hover { background: rgba(255,255,255,0.32); }
+  /* Detail modal */
+  .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .detail-layerline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .detail-layer { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .detail-node { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-top: 6px; }
+  .detail-grid { display: grid; grid-template-columns: 84px 1fr; gap: 8px 12px; margin: 14px 0; }
+  .detail-k { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; padding-top: 1px; }
+  .detail-v { font-size: 13px; color: var(--text-primary); }
+  .detail-desc {
+    font-size: 13px; color: var(--text-primary); line-height: 1.5;
+    background: var(--bg-secondary); border-radius: 8px; padding: 10px 12px;
+    border-left: 3px solid;
+  }
+  .amend-row { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .amend-btn {
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    border: 0.5px solid var(--border-med); background: var(--bg-primary); color: var(--text-primary);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .amend-btn:hover { background: var(--bg-secondary); }
+  .amend-btn.solid-ok { background: var(--ok); color: #fff; border-color: var(--ok); }
+  .amend-btn.solid-warn { background: var(--warn); color: #fff; border-color: var(--warn); }
+</style>
+
+<!-- Supabase JS client (loads in the browser from the CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Login gate: shown until the user is authenticated -->
+<div id="loginGate">
+  <div class="login-card">
+    <div class="login-brand">
+      <svg width="18" height="20" viewBox="0 0 18 20" fill="none" stroke="#E4007C" stroke-width="1.6"><path d="M9 1 16.8 5.5 16.8 14.5 9 19 1.2 14.5 1.2 5.5Z" stroke-linejoin="round"/></svg>
+      <span class="login-brand-title">Network Change Log</span>
+    </div>
+    <div class="form-row"><label class="form-label">Email</label><input class="form-input" type="email" id="loginEmail" placeholder="you@operator.hr" autocomplete="username"></div>
+    <div class="form-row"><label class="form-label">Password</label><input class="form-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign in</button>
+    <div class="login-msg" id="loginMsg"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="18" height="20" viewBox="0 0 18 20" fill="none" stroke="white" stroke-width="1.6"><path d="M9 1 16.8 5.5 16.8 14.5 9 19 1.2 14.5 1.2 5.5Z" stroke-linejoin="round"/></svg>
+      <span class="topbar-title">Network Change Log</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:12px;opacity:0.85" id="topMonth">May 2025</span>
+      <span class="topbar-user" id="topUser"></span>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn"></button>
+      <button id="logoutBtn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="view-tabs">
+    <button class="tab-btn active" onclick="switchView('calendar',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Calendar
+    </button>
+    <button class="tab-btn" onclick="switchView('timeline',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h13M3 12h18M3 18h9"/></svg>Timeline
+    </button>
+  </div>
+
+  <div class="filters" id="filterBar"></div>
+
+  <div class="main">
+    <div id="calView" class="calendar-area">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+        <span class="cal-nav-title" id="calTitle"></span>
+        <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div id="tlView" class="timeline-area" style="display:none"></div>
+
+    <div class="detail-panel closed" id="detailPanel">
+      <div class="panel-header">
+        <span class="panel-date" id="panelDate"></span>
+        <button class="panel-close" onclick="closePanel()">×</button>
+      </div>
+      <div class="panel-body" id="panelBody"></div>
+      <div class="panel-footer">
+        <button class="add-btn" onclick="openAddModal()">+ Add entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add modal -->
+  <div id="modalBg" class="modal-bg" style="display:none" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-title">Add entry</div>
+      <div class="form-row">
+        <label class="form-label">Kind</label>
+        <div class="kind-seg" id="fKindSeg" style="width:100%">
+          <button type="button" style="flex:1" class="active" onclick="setAddKind('work')">Work</button>
+          <button type="button" style="flex:1" onclick="setAddKind('note')">Note</button>
+        </div>
+      </div>
+      <div class="form-row"><label class="form-label">Date</label><input class="form-input" type="date" id="fDate"></div>
+      <div class="form-row"><label class="form-label">Layer</label><select class="form-input" id="fLayer"></select></div>
+      <div class="form-row work-only"><label class="form-label">Type</label>
+        <select class="form-input" id="fType">
+          <option>Planned maintenance</option><option>Parameter change</option>
+          <option>Software upgrade</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-row-split work-only">
+        <div><label class="form-label">Start</label><input class="form-input" type="time" id="fStart" value="09:00"></div>
+        <div><label class="form-label">End</label><input class="form-input" type="time" id="fEnd" value="10:00"></div>
+      </div>
+      <div class="form-row work-only" style="display:flex;gap:18px;margin-top:4px">
+        <label class="form-check"><input type="checkbox" id="fNight"> Overnight (ends next morning)</label>
+        <label class="form-check"><input type="checkbox" id="fInc"> Incident</label>
+      </div>
+      <div class="form-row note-only" style="display:none"><label class="form-label">Status</label>
+        <select class="form-input" id="fNoteStatus">
+          <option value="observation">Observation</option>
+          <option value="open">Open problem</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <div class="form-row"><label class="form-label" id="fNodeLabel">System / node</label><input class="form-input" type="text" id="fNode" placeholder="e.g. eNB-0441"></div>
+      <div class="form-row"><label class="form-label">Description</label><textarea class="form-input" id="fDesc" rows="2" placeholder="Short description"></textarea></div>
+      <div class="form-row"><label class="form-label">Engineer</label><input class="form-input" type="text" id="fUser" placeholder="Your name"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveEvent()">Save entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail modal -->
+  <div id="detailBg" class="modal-bg" style="display:none" onclick="if(event.target===this)closeDetail()">
+    <div class="modal" id="detailModal"></div>
+  </div>
+</div>
+
+<script>
+const LAYERS = [
+  { id:'ran',   label:'RAN',       color:'#E4007C', bg:'#fce8f3', bgd:'#3d0020', text:'#8a004d', textd:'#f9b8d8' },
+  { id:'trans', label:'Transport', color:'#185FA5', bg:'#e6f1fb', bgd:'#0a2540', text:'#0C447C', textd:'#90c4f0' },
+  { id:'core',  label:'Core',      color:'#0F6E56', bg:'#e1f5ee', bgd:'#052e22', text:'#085041', textd:'#7dd9b8' },
+];
+const lmap = {};
+LAYERS.forEach(l => lmap[l.id] = l);
+
+// kind: 'work' | 'note'
+// works have start/end (local "YYYY-MM-DDTHH:MM"); incident flagged on real layer; overnight = start date != end date.
+// notes have date only (an observation, no time window).
+let events = [];   // loaded from Supabase after sign-in
+
+// derive date keys + overnight flag for one event
+function deriveEvent(e) {
+  if (e.kind === 'work') {
+    e.startDate = e.start.split('T')[0];
+    e.endDate = e.end.split('T')[0];
+    e.overnight = e.startDate !== e.endDate;
+  } else {
+    e.startDate = e.date;
+    e.endDate = e.date;
+    e.overnight = false;
+  }
+  return e;
+}
+
+let selectedDate = null;
+let activeFilters = new Set(LAYERS.map(l => l.id));
+let activeKind = 'all';   // 'all' | 'work' | 'note'
+let currentMonth = new Date(2025, 4, 1);
+let isDark = false;
+let currentView = 'calendar';
+let addKind = 'work';
+
+const MAX_NIGHT = 3;      // visible night boxes before collapsing to "+N more"
+const ICON_MOON = '<svg class="moon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>';
+
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtTime(iso){ return iso.split('T')[1]; }
+function durationStr(e){
+  const ms = new Date(e.end) - new Date(e.start);
+  const min = Math.round(ms/60000);
+  if (min < 60) return min + ' min';
+  const h = Math.floor(min/60), m = min%60;
+  return m ? h+'h '+m+'m' : h+'h';
+}
+function nextDayStr(ds){ const d = new Date(ds+'T12:00:00'); d.setDate(d.getDate()+1); return ymd(d); }
+function prettyDay(ds){ return new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
+
+function passKind(e){ return activeKind === 'all' || e.kind === activeKind; }
+function pass(e){ return passKind(e) && activeFilters.has(e.layer); }
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.getElementById('app').setAttribute('data-theme', isDark ? 'dark' : '');
+  document.getElementById('themeBtn').innerHTML = isDark
+    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg> Light'
+    : ICON_MOON + ' Dark';
+  refreshAll();
+}
+
+function getLyr(id) {
+  const l = lmap[id];
+  return { color: l.color, bg: isDark ? l.bgd : l.bg, text: isDark ? l.textd : l.text };
+}
+
+function switchView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('calView').style.display = view === 'calendar' ? 'flex' : 'none';
+  document.getElementById('tlView').style.display = view === 'timeline' ? 'block' : 'none';
+  if (view === 'timeline') renderTimeline();
+  closePanel();
+}
+
+function setKind(k){ activeKind = k; refreshAll(); }
+
+function buildFilterBar() {
+  const bar = document.getElementById('filterBar');
+  bar.innerHTML = '';
+  const showLbl = document.createElement('span'); showLbl.className='filter-label'; showLbl.textContent='Show';
+  bar.appendChild(showLbl);
+  const seg = document.createElement('div'); seg.className='kind-seg';
+  [['all','All'],['work','Works'],['note','Notes']].forEach(([k,label]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if (activeKind === k) b.classList.add('active');
+    b.onclick = () => setKind(k);
+    seg.appendChild(b);
+  });
+  bar.appendChild(seg);
+  const div = document.createElement('div'); div.className='filter-div'; bar.appendChild(div);
+  const layLbl = document.createElement('span'); layLbl.className='filter-label'; layLbl.textContent='Layers';
+  bar.appendChild(layLbl);
+  LAYERS.forEach(l => {
+    const on = activeFilters.has(l.id);
+    const lyr = getLyr(l.id);
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (on ? '' : ' off');
+    btn.style.borderColor = l.color;
+    btn.style.background = on ? lyr.bg : 'transparent';
+    btn.style.color = on ? lyr.text : 'var(--text-secondary)';
+    btn.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${l.color};margin-right:5px;vertical-align:middle"></span>${l.label}`;
+    btn.onclick = () => { activeFilters.has(l.id) ? activeFilters.delete(l.id) : activeFilters.add(l.id); refreshAll(); };
+    bar.appendChild(btn);
+  });
+  const all = document.createElement('button');
+  all.className = 'filter-btn';
+  all.style.borderColor = 'var(--border-med)';
+  all.style.color = 'var(--text-secondary)';
+  all.textContent = 'All';
+  all.onclick = () => { activeFilters = new Set(LAYERS.map(l => l.id)); refreshAll(); };
+  bar.appendChild(all);
+}
+
+function refreshAll() {
+  buildFilterBar();
+  renderCalendar();
+  if (currentView === 'timeline') renderTimeline();
+  if (selectedDate) openPanel(selectedDate);
+}
+
+function changeMonth(dir) {
+  currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + dir, 1);
+  renderCalendar();
+  if (currentView === 'timeline') renderTimeline();
+}
+
+function eventsForDate(ds) {
+  return events.filter(e => (e.startDate === ds || e.endDate === ds) && pass(e));
+}
+
+function renderCalendar() {
+  const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
+  const monthLabel = currentMonth.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  document.getElementById('calTitle').textContent = monthLabel;
+  document.getElementById('topMonth').textContent = monthLabel;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow'; el.textContent = d;
+    grid.appendChild(el);
+  });
+  let startDow = new Date(y, m, 1).getDay();
+  startDow = startDow === 0 ? 6 : startDow - 1;
+  const today = new Date();
+  for (let i = 0; i < 42; i++) {
+    const date = new Date(y, m, 1 + i - startDow);
+    const ds = ymd(date);
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    if (date.getMonth() !== m) cell.classList.add('other-month');
+    if (date.toDateString() === today.toDateString()) cell.classList.add('today');
+    if (ds === selectedDate) cell.classList.add('selected');
+    cell.innerHTML = `<div class="day-num">${date.getDate()}</div>`;
+
+    // single-day markers: day-time works + notes that start on this day
+    const markerEvts = events.filter(e => e.startDate === ds && !e.overnight && pass(e));
+    if (markerEvts.length) {
+      const row = document.createElement('div');
+      row.className = 'dot-row';
+      markerEvts.slice(0,7).forEach(e => {
+        const mk = document.createElement('div');
+        if (e.kind === 'note') {
+          const st = e.status || 'observation';
+          mk.className = 'note-mark ' + st;
+          mk.style.background = lmap[e.layer].color;
+          mk.textContent = st === 'open' ? '!' : st === 'resolved' ? '✓' : '';
+          mk.title = e.node + ' — ' + (st === 'open' ? 'open problem' : st === 'resolved' ? 'resolved' : 'note');
+        }
+        else if (e.incident) { mk.className = 'inc-mark'; mk.style.background = lmap[e.layer].color; mk.textContent = '!'; mk.title = e.node + ' — incident'; }
+        else { mk.className = 'dot'; mk.style.background = lmap[e.layer].color; mk.title = e.node; }
+        row.appendChild(mk);
+      });
+      cell.appendChild(row);
+      if (markerEvts.length > 7) {
+        const c = document.createElement('div'); c.className='event-count'; c.textContent = markerEvts.length+' entries'; cell.appendChild(c);
+      }
+    }
+
+    // overnight works -> spanning boxes anchored on start day
+    const nightEvts = events.filter(e => e.overnight && e.startDate === ds && pass(e));
+    const shown = nightEvts.length > MAX_NIGHT ? nightEvts.slice(0, MAX_NIGHT - 1) : nightEvts;
+    shown.forEach((e, idx) => {
+      const box = document.createElement('div');
+      box.className = 'night-box' + (e.incident ? ' incident' : '');
+      box.style.background = lmap[e.layer].color;
+      box.style.bottom = (6 + idx*24) + 'px';
+      box.innerHTML = ICON_MOON + '<span class="nb-label">'+e.node+'</span>';
+      box.title = e.node + ' · ' + fmtTime(e.start) + '–' + fmtTime(e.end) + ' (overnight)';
+      box.onclick = (ev) => { ev.stopPropagation(); openDetail(e.id); };
+      cell.appendChild(box);
+    });
+    if (nightEvts.length > MAX_NIGHT) {
+      const more = document.createElement('div');
+      more.className = 'night-more';
+      more.style.bottom = (6 + (MAX_NIGHT-1)*24) + 'px';
+      more.textContent = '+' + (nightEvts.length - (MAX_NIGHT-1)) + ' more';
+      more.onclick = (ev) => { ev.stopPropagation(); openPanel(ds); };
+      cell.appendChild(more);
+    }
+
+    cell.onclick = () => openPanel(ds);
+    grid.appendChild(cell);
+  }
+}
+
+function openPanel(ds) {
+  selectedDate = ds;
+  renderCalendar();
+  const d = new Date(ds + 'T12:00:00');
+  document.getElementById('panelDate').textContent =
+    d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
+  const body = document.getElementById('panelBody');
+  const evts = eventsForDate(ds);
+  if (!evts.length) {
+    body.innerHTML = '<div class="empty-panel">Nothing logged for this day</div>';
+  } else {
+    const byL = {};
+    evts.forEach(e => { if (!byL[e.layer]) byL[e.layer]=[]; byL[e.layer].push(e); });
+    let html = '';
+    LAYERS.forEach(l => {
+      if (!byL[l.id]) return;
+      const lyr = getLyr(l.id);
+      html += `<div class="layer-group-title">${l.label}</div>`;
+      byL[l.id].sort((a,b)=> (a.start||a.date).localeCompare(b.start||b.date)).forEach(e => {
+        if (e.kind === 'note') {
+          const st = e.status || 'observation';
+          const stTag = st === 'open' ? '<span class="event-tag tag-open">Open</span>'
+                      : st === 'resolved' ? '<span class="event-tag tag-resolved">Resolved</span>' : '';
+          html += `<div class="event-item is-note" style="border-left-color:${l.color};background:${lyr.bg}" onclick="openDetail(${e.id})">
+            <span class="event-badge note-badge">Note</span>${stTag}
+            <div class="event-node">${e.node}</div>
+            <div class="event-desc">${e.desc}</div>
+            <div class="event-user">${e.user}</div>
+          </div>`;
+        } else {
+          const tags = (e.incident ? '<span class="event-tag tag-inc">Incident</span>' : '')
+                     + (e.overnight ? '<span class="event-tag tag-night">Night</span>' : '');
+          const timeLabel = e.overnight
+            ? `${prettyDay(e.startDate)} ${fmtTime(e.start)} → ${prettyDay(e.endDate)} ${fmtTime(e.end)}`
+            : `${fmtTime(e.start)}–${fmtTime(e.end)}`;
+          html += `<div class="event-item" style="border-left-color:${l.color};background:${lyr.bg}" onclick="openDetail(${e.id})">
+            <span class="event-badge" style="background:${l.color}22;color:${lyr.text}">${e.type}</span>${tags}
+            <div class="event-node">${e.node}</div>
+            <div class="event-time">${timeLabel} · ${durationStr(e)}</div>
+            <div class="event-desc">${e.desc}</div>
+            <div class="event-user">${e.user}</div>
+          </div>`;
+        }
+      });
+    });
+    body.innerHTML = html;
+  }
+  document.getElementById('detailPanel').classList.remove('closed');
+}
+
+function closePanel() {
+  selectedDate = null;
+  document.getElementById('detailPanel').classList.add('closed');
+  renderCalendar();
+}
+
+function openDetail(id) {
+  const e = events.find(x => x.id === id);
+  if (!e) return;
+  const l = lmap[e.layer];
+  const lyr = getLyr(e.layer);
+  let tags, gridRows, accent, amendHtml = '';
+  if (e.kind === 'note') {
+    const st = e.status || 'observation';
+    tags = '<span class="event-tag note-badge">Note</span>'
+         + (st === 'open' ? '<span class="event-tag tag-open">Open</span>'
+            : st === 'resolved' ? '<span class="event-tag tag-resolved">Resolved</span>' : '');
+    const statusLabel = st === 'open' ? 'Open problem' : st === 'resolved' ? 'Resolved' : 'Observation';
+    gridRows = `
+      <div class="detail-k">Kind</div><div class="detail-v">Observation / note</div>
+      <div class="detail-k">Status</div><div class="detail-v">${statusLabel}</div>
+      <div class="detail-k">Date</div><div class="detail-v">${prettyDay(e.date)}, ${new Date(e.date+'T12:00:00').getFullYear()}</div>
+      <div class="detail-k">Elements</div><div class="detail-v">${e.node}</div>
+      <div class="detail-k">Logged by</div><div class="detail-v">${e.user}</div>`;
+    accent = st === 'open' ? 'var(--warn)' : st === 'resolved' ? 'var(--ok)' : l.color;
+    // amend controls
+    let btns = '';
+    if (st !== 'open') btns += `<button class="amend-btn solid-warn" onclick="setNoteStatus(${e.id},'open')">Flag as open problem</button>`;
+    if (st !== 'resolved') btns += `<button class="amend-btn solid-ok" onclick="setNoteStatus(${e.id},'resolved')">Mark resolved</button>`;
+    if (st !== 'observation') btns += `<button class="amend-btn" onclick="setNoteStatus(${e.id},'observation')">Plain note</button>`;
+    amendHtml = `<div class="amend-row">${btns}</div>`;
+  } else {
+    tags = (e.incident ? '<span class="event-tag tag-inc">Incident</span>' : '')
+         + (e.overnight ? '<span class="event-tag tag-night">Night work</span>' : '');
+    const windowLabel = e.overnight
+      ? `${prettyDay(e.startDate)}, ${fmtTime(e.start)} &rarr; ${prettyDay(e.endDate)}, ${fmtTime(e.end)}`
+      : `${prettyDay(e.startDate)}, ${fmtTime(e.start)} &ndash; ${fmtTime(e.end)}`;
+    gridRows = `
+      <div class="detail-k">Type</div><div class="detail-v">${e.type}</div>
+      <div class="detail-k">Window</div><div class="detail-v">${windowLabel}</div>
+      <div class="detail-k">Duration</div><div class="detail-v">${durationStr(e)}</div>
+      <div class="detail-k">Elements</div><div class="detail-v">${e.node}</div>
+      <div class="detail-k">Engineer</div><div class="detail-v">${e.user}</div>`;
+    accent = e.incident ? 'var(--inc)' : l.color;
+  }
+  document.getElementById('detailModal').innerHTML = `
+    <div class="detail-head">
+      <div>
+        <div class="detail-layerline">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${l.color}"></span>
+          <span class="detail-layer" style="color:${lyr.text}">${l.label}</span>
+          ${tags}
+        </div>
+        <div class="detail-node">${e.node}</div>
+      </div>
+      <button class="panel-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="detail-grid">${gridRows}</div>
+    <div class="detail-desc" style="border-left-color:${accent}">${e.desc}</div>
+    ${amendHtml}
+  `;
+  document.getElementById('detailBg').style.display = 'flex';
+}
+function closeDetail() { document.getElementById('detailBg').style.display = 'none'; }
+
+async function setNoteStatus(id, status) {
+  const e = events.find(x => x.id === id);
+  if (!e || e.kind !== 'note') return;
+  const prev = e.status;
+  e.status = status;                       // optimistic local update
+  renderCalendar();
+  if (currentView === 'timeline') renderTimeline();
+  if (selectedDate) openPanel(selectedDate);
+  openDetail(id);                          // refresh the open modal
+  const { error } = await sb.from('events').update({ status }).eq('id', id);
+  if (error) { alert('Could not save status change: ' + error.message); e.status = prev; refreshAll(); openDetail(id); }
+}
+
+function setAddKind(k){
+  addKind = k;
+  document.querySelectorAll('#fKindSeg button').forEach((b,i)=> b.classList.toggle('active', (k==='work') === (i===0)));
+  document.querySelectorAll('.work-only').forEach(el => el.style.display = (k==='work') ? '' : 'none');
+  document.querySelectorAll('.note-only').forEach(el => el.style.display = (k==='note') ? '' : 'none');
+  document.getElementById('fNodeLabel').textContent = (k==='work') ? 'System / node' : 'Element(s) observed';
+  document.getElementById('fNode').placeholder = (k==='work') ? 'e.g. eNB-0441' : 'e.g. baseband, cluster, region';
+}
+
+function openAddModal() {
+  const ds = selectedDate || ymd(new Date());
+  document.getElementById('fDate').value = ds;
+  document.getElementById('fLayer').innerHTML = LAYERS.map(l=>`<option value="${l.id}">${l.label}</option>`).join('');
+  document.getElementById('fStart').value = '09:00';
+  document.getElementById('fEnd').value = '10:00';
+  document.getElementById('fNight').checked = false;
+  document.getElementById('fInc').checked = false;
+  document.getElementById('fNode').value = '';
+  document.getElementById('fDesc').value = '';
+  document.getElementById('fUser').value = '';
+  document.getElementById('fNoteStatus').value = 'observation';
+  setAddKind('work');
+  document.getElementById('modalBg').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('modalBg').style.display = 'none'; }
+
+async function saveEvent() {
+  const date = document.getElementById('fDate').value;
+  if (!date) return;
+  let row;
+  if (addKind === 'note') {
+    row = {
+      kind: 'note',
+      layer: document.getElementById('fLayer').value,
+      node: document.getElementById('fNode').value || 'Unspecified',
+      status: document.getElementById('fNoteStatus').value,
+      event_date: date,
+      description: document.getElementById('fDesc').value || '—',
+      engineer: document.getElementById('fUser').value || 'Unknown',
+    };
+  } else {
+    const overnight = document.getElementById('fNight').checked;
+    const startT = document.getElementById('fStart').value || '00:00';
+    const endT = document.getElementById('fEnd').value || '01:00';
+    const endDate = overnight ? nextDayStr(date) : date;
+    row = {
+      kind: 'work',
+      layer: document.getElementById('fLayer').value,
+      type: document.getElementById('fType').value,
+      node: document.getElementById('fNode').value || 'Unknown node',
+      incident: document.getElementById('fInc').checked,
+      start_at: date + 'T' + startT,
+      end_at: endDate + 'T' + endT,
+      description: document.getElementById('fDesc').value || '—',
+      engineer: document.getElementById('fUser').value || 'Unknown',
+    };
+  }
+  const { data, error } = await sb.from('events').insert(row).select().single();
+  if (error) { alert('Could not save entry: ' + error.message); return; }
+  events.push(deriveEvent(fromRow(data)));
+  closeModal();
+  refreshAll();
+  openPanel(addKind === 'note' ? date : row.start_at.split('T')[0]);
+}
+
+function renderTimeline() {
+  const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
+  const days = new Date(y, m+1, 0).getDate();
+  const filtered = events.filter(e => {
+    const d = new Date(e.startDate+'T12:00:00');
+    return d.getFullYear()===y && d.getMonth()===m && pass(e);
+  });
+  const cont = document.getElementById('tlView');
+  const LANE_H = 26, LANE_GAP = 4, PAD = 5;
+  let html = `<div style="font-size:14px;font-weight:500;color:var(--text-primary);margin-bottom:12px">
+    ${currentMonth.toLocaleDateString('en-GB',{month:'long',year:'numeric'})} — multi-layer overview
+  </div>
+  <div style="display:grid;grid-template-columns:90px 1fr;margin-bottom:3px">
+    <div></div>
+    <div style="display:grid;grid-template-columns:repeat(${days},1fr)">
+      ${Array.from({length:days},(_,i)=>`<div style="text-align:center;font-size:9px;color:var(--text-secondary)">${i+1}</div>`).join('')}
+    </div>
+  </div>`;
+
+  LAYERS.forEach(l => {
+    const le = filtered.filter(e=>e.layer===l.id).sort((a,b)=> (a.start||a.date).localeCompare(b.start||b.date));
+    const lanes = [];
+    le.forEach(e => {
+      const sd = parseInt(e.startDate.split('-')[2]);
+      const ed = e.overnight ? Math.min(sd+1, days) : sd;
+      let placed = false;
+      for (const lane of lanes) {
+        if (lane.lastEnd < sd) { lane.items.push(e); lane.lastEnd = ed; placed = true; break; }
+      }
+      if (!placed) lanes.push({ items:[e], lastEnd: ed });
+    });
+    const rowH = Math.max(LANE_H + PAD*2, lanes.length*(LANE_H+LANE_GAP) - LANE_GAP + PAD*2);
+    html += `<div style="display:grid;grid-template-columns:90px 1fr;margin-bottom:6px;align-items:stretch">
+      <div style="font-size:11px;font-weight:500;color:${l.color};text-transform:uppercase;letter-spacing:0.06em;padding-right:8px;display:flex;align-items:center">${l.label}</div>
+      <div style="background:var(--bg-primary);border:0.5px solid var(--border);border-radius:6px;height:${rowH}px;position:relative;overflow:hidden">`;
+    if (!lanes.length) {
+      html += `<div style="position:absolute;inset:0;display:flex;align-items:center;padding-left:12px;font-size:11px;color:var(--text-secondary);opacity:0.4">no entries</div>`;
+    }
+    lanes.forEach((lane, li) => {
+      lane.items.forEach(e => {
+        const sd = parseInt(e.startDate.split('-')[2]);
+        const spanDays = e.overnight ? 2 : 1;
+        const left = ((sd-1)/days*100).toFixed(2);
+        const w = (spanDays/days*100).toFixed(2);
+        const top = PAD + li*(LANE_H+LANE_GAP);
+        const isNote = e.kind === 'note';
+        const style = isNote
+          ? `background:transparent;border:1px dashed ${l.color};color:${getLyr(l.id).text};opacity:0.95;`
+          : `background:${l.color};${e.incident?'border:1.5px solid var(--inc);':''}opacity:${e.incident?1:0.82};color:white;`;
+        const notePrefix = isNote ? (e.status === 'open' ? '! ' : e.status === 'resolved' ? '✓ ' : '◇ ') : '';
+        const label = notePrefix + (e.overnight ? '◗ ' : '') + e.node;
+        const tt = isNote ? (e.node+': note') : (e.node+': '+fmtTime(e.start)+'–'+fmtTime(e.end));
+        html += `<div style="position:absolute;top:${top}px;height:${LANE_H}px;left:${left}%;width:max(${w}%,30px);${style}border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" title="${tt}" onclick="openDetail(${e.id})">${label}</div>`;
+      });
+    });
+    html += `</div></div>`;
+  });
+  html += `<div style="margin-top:10px;font-size:10px;color:var(--text-secondary);display:flex;gap:16px;flex-wrap:wrap">
+    <span><span style="display:inline-block;width:9px;height:9px;border:1.5px solid var(--inc);border-radius:50%;vertical-align:middle;margin-right:4px"></span>Incident</span>
+    <span>◗ overnight (spans two days)</span>
+    <span>note: ◇ observation &nbsp; ! open &nbsp; ✓ resolved</span>
+  </div>`;
+  cont.innerHTML = html;
+}
+
+// ============================================================
+//  Supabase wiring
+//  >>> EDIT THESE TWO LINES with the values from your project <<<
+//  Supabase dashboard → Project Settings → API
+// ============================================================
+const SUPABASE_URL  = 'https://odecimhbblkezfxyjkyb.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZWNpbWhiYmxrZXpmeHlqa3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDY4MTMsImV4cCI6MjA5NTgyMjgxM30.vGRnFV3YiWXBc13K6ClxvGqmzuBeASXvyibLOViW7I4';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Map a DB row (snake_case columns) to the shape the UI already expects.
+function fromRow(r) {
+  return {
+    id: r.id,
+    kind: r.kind,
+    layer: r.layer,
+    type: r.type,
+    node: r.node,
+    incident: r.incident,
+    start: r.start_at,
+    end: r.end_at,
+    status: r.status,
+    date: r.event_date,
+    desc: r.description,
+    user: r.engineer,
+  };
+}
+
+async function loadEvents() {
+  const { data, error } = await sb.from('events').select('*');
+  if (error) { alert('Could not load events: ' + error.message); events = []; return; }
+  events = data.map(r => deriveEvent(fromRow(r)));
+}
+
+// ---- auth gate ----
+function showLogin(msg) {
+  document.getElementById('loginGate').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginMsg').textContent = msg || '';
+}
+
+async function startApp(session) {
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  document.getElementById('topUser').textContent = session.user.email;
+  document.getElementById('themeBtn').innerHTML = ICON_MOON + ' Dark';
+  await loadEvents();
+  buildFilterBar();
+  renderCalendar();
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPass').value;
+  document.getElementById('loginMsg').textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Sign in';
+  if (error) { document.getElementById('loginMsg').textContent = error.message; return; }
+  startApp(data.session);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  selectedDate = null;
+  showLogin('Signed out.');
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// On load: resume an existing session, otherwise show the login screen.
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) startApp(session); else showLogin();
+})();
+</script>
